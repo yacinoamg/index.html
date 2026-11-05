@@ -101,6 +101,7 @@ main{padding-top:14px}
 #msgMain b{color:var(--ink)}
 #diag{font-size:.78rem;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
 .dock .ib{flex:none}
+#dbg{font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px;overflow-wrap:anywhere}
 .chip{background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.78rem;color:var(--accent);margin-top:5px}
 #mic.live.lvl{animation:none;box-shadow:0 0 0 calc(var(--lvl,0) * 20px) rgba(194,51,51,.35),0 4px 14px rgba(0,0,0,.25)}
 dialog p{margin:.4em 0}
@@ -185,7 +186,7 @@ dialog::backdrop{background:rgba(5,10,20,.55)}
   <button id="mic" aria-label="Commencer la récitation">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
   </button>
-  <div id="msg"><div id="msgMain">Touche le micro et récite, depuis n’importe quel mot de la page.</div><div id="diag"></div><button type="button" class="chip" id="eng"></button></div>
+  <div id="msg"><div id="msgMain">Touche le micro et récite, depuis n’importe quel mot de la page.</div><div id="diag"></div><div id="dbg"></div><button type="button" class="chip" id="eng"></button></div>
   <button class="ib" id="playPage" aria-label="Écouter la page">▶︎ Page</button>
 </div></div>
 
@@ -599,6 +600,7 @@ function stopListening(silent,keepDiag){
   clearTimeout(watch);
   try{S.rec&&S.rec.abort()}catch(e){}
   stopCapture();A.queue=[];
+  const dg=$('#dbg');if(dg)dg.textContent='';
   $('#mic').style.removeProperty('--lvl');$('#mic').classList.remove('lvl');
   $('#mic').classList.remove('live');$('#mic').setAttribute('aria-label','Commencer la récitation');
   $('#heard').textContent='';
@@ -693,7 +695,7 @@ function askDownload(){
     d.onclose=()=>res(out);
   });
 }
-const A={ac:null,stream:null,node:null,src:null,pre:[],seg:[],segLen:0,voice:0,sil:0,noise:.008,active:false,busy:false,queue:[],draining:false};
+const A={ac:null,stream:null,node:null,src:null,pre:[],seg:[],segLen:0,voice:0,sil:0,noise:.008,active:false,busy:false,queue:[],draining:false,hist:[],sent:0,got:0,ms:0,tick:0,rms:0};
 function resample(x,from,to){
   if(from===to)return x;
   const r=from/to,n=Math.floor(x.length/r),out=new Float32Array(n);
@@ -701,14 +703,16 @@ function resample(x,from,to){
   return out;
 }
 async function startAudio(){
-  A.stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:true}});
   const AC=window.AudioContext||window.webkitAudioContext;
-  A.ac=new AC();await A.ac.resume();
+  if(!A.ac)A.ac=new AC();
+  try{A.ac.resume()}catch(e){}
+  A.stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:true}});
+  await Promise.race([A.ac.resume(),sleep(1500)]);
   A.src=A.ac.createMediaStreamSource(A.stream);
   A.node=A.ac.createScriptProcessor(4096,1,1);
   A.node.onaudioprocess=ev=>onAudio(new Float32Array(ev.inputBuffer.getChannelData(0)));
   A.src.connect(A.node);A.node.connect(A.ac.destination);
-  Object.assign(A,{seg:[],pre:[],segLen:0,voice:0,sil:0,active:false,noise:.008,draining:false,queue:[]});
+  Object.assign(A,{seg:[],pre:[],segLen:0,voice:0,sil:0,active:false,noise:.008,draining:false,queue:[],hist:[],sent:0,got:0,ms:0,tick:0,rms:0});
 }
 function stopCapture(){
   try{if(A.node){A.node.onaudioprocess=null;A.node.disconnect()}}catch(e){}
@@ -721,10 +725,13 @@ function onAudio(x){
   if(!S.listening||engine()!=='model'||!A.ac||A.draining)return;
   const sr=A.ac.sampleRate,dur=x.length/sr*1000;
   let s=0;for(let i=0;i<x.length;i+=2)s+=x[i]*x[i];
-  const rms=Math.sqrt(s/(x.length/2));
-  $('#mic').style.setProperty('--lvl',Math.min(1,rms*12).toFixed(2));
-  const loud=rms>Math.max(.015,A.noise*3);
-  if(!loud)A.noise=A.noise*.95+rms*.05;
+  const rms=Math.sqrt(s/(x.length/2));A.rms=rms;
+  $('#mic').style.setProperty('--lvl',Math.min(1,rms*14).toFixed(2));
+  A.hist.push(rms);if(A.hist.length>60)A.hist.shift();
+  const srt=[...A.hist].sort((a,b)=>a-b);
+  A.noise=Math.min(.006,srt[Math.floor(srt.length*.15)]);
+  const thr=Math.max(.005,A.noise*2.6);A.thr=thr;
+  const loud=rms>thr;
   if(loud){
     if(!A.active){A.active=true;A.seg=A.pre.slice();A.segLen=A.seg.reduce((n,c)=>n+c.length,0);A.voice=0}
     A.voice+=dur;A.sil=0;
@@ -732,7 +739,13 @@ function onAudio(x){
   if(A.active){A.seg.push(x);A.segLen+=x.length;if(!loud)A.sil+=dur}
   else{A.pre.push(x);if(A.pre.length>4)A.pre.shift()}
   const segMs=A.segLen/sr*1000;
-  if(A.active&&(A.sil>=650||(segMs>=9000&&!loud)||segMs>=15000))flushSeg();
+  if(A.active&&(A.sil>=600||(segMs>=6000&&!loud)||segMs>=10000))flushSeg();
+  const now=Date.now();
+  if(now-A.tick>400){A.tick=now;showDbg(rms,thr)}
+}
+function showDbg(rms,thr){
+  const e=$('#dbg');if(!e)return;
+  e.textContent=`niveau ${(rms*100).toFixed(1)} · seuil ${(thr*100).toFixed(1)} · envoyés ${A.sent} · reçus ${A.got}${A.ms?' · '+(A.ms/1000).toFixed(1)+' s':''}`;
 }
 function flushSeg(){
   if(!A.ac)return;
@@ -744,7 +757,7 @@ function flushSeg(){
   const f=resample(all,sr,16000);
   let pk=0;for(let i=0;i<f.length;i++){const v=Math.abs(f[i]);if(v>pk)pk=v}
   if(pk>0&&pk<.5){const g=.7/pk;for(let i=0;i<f.length;i++)f[i]*=g}
-  A.queue.push(f);if(A.queue.length>3)A.queue.shift();
+  A.sent++;A.queue.push(f);if(A.queue.length>3)A.queue.shift();
   pump();
 }
 async function pump(){
@@ -752,9 +765,11 @@ async function pump(){
   try{
     while(A.queue.length&&S.listening){
       const f=A.queue.shift();
-      $('#heard').textContent='…';setDiag('Analyse…');
-      let text='';
+      $('#heard').textContent='…';
+      let text='';const t0=Date.now();
+      setDiag(A.got?'Analyse…':'Analyse… le premier passage est lent, patiente.');
       try{text=await transcribe(f)}catch(e){setDiag('Erreur du modèle : '+e.message);continue}
+      A.ms=Date.now()-t0;A.got++;showDbg(A.rms,A.thr||0);
       if(!S.listening)break;
       text=(text||'').trim();
       if(normalize(text).length>=2){
@@ -778,7 +793,8 @@ async function startModel(){
   if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&(window.AudioContext||window.webkitAudioContext)&&window.Worker)){
     setDiag('Ce navigateur ne permet pas le modèle Coran. Choisis « reconnaissance de Safari ».');return}
   S.listening=true;
-  const off=()=>{S.listening=false;$('#mic').classList.remove('live','lvl');$('#mic').setAttribute('aria-label','Commencer la récitation');setMsg()};
+  if(!A.ac){try{A.ac=new (window.AudioContext||window.webkitAudioContext)();A.ac.resume()}catch(e){}}
+  const off=()=>{try{A.ac&&A.ac.close()}catch(x){}A.ac=null;S.listening=false;$('#mic').classList.remove('live','lvl');$('#mic').setAttribute('aria-label','Commencer la récitation');setMsg()};
   $('#mic').classList.add('live','lvl');$('#mic').setAttribute('aria-label','Arrêter la récitation');
   try{
     if(M.state!=='ready'){
