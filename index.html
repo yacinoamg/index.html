@@ -27,6 +27,7 @@
   --accent:#8AA6FF; --on-accent:#0B1322; --brass:#E2B964; --brass-soft:rgba(226,185,100,.18);
   --ok:#3DD598; --approx:#F2B34A; --bad:#FF7070; --skip:#8B97AD; color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--ui);min-height:100vh;
   padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));
@@ -679,3 +680,6 @@ async function unlockThenBoot(){
 }
 unlockThenBoot();
 })();
+</script>
+</body>
+</html>
