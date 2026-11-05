@@ -102,6 +102,7 @@ main{padding-top:14px}
 #diag{font-size:.78rem;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
 .dock .ib{flex:none}
 #dbg{font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px;overflow-wrap:anywhere}
+.chip+.chip{margin-left:6px}
 .chip{background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.78rem;color:var(--accent);margin-top:5px}
 #mic.live.lvl{animation:none;box-shadow:0 0 0 calc(var(--lvl,0) * 20px) rgba(194,51,51,.35),0 4px 14px rgba(0,0,0,.25)}
 dialog p{margin:.4em 0}
@@ -146,7 +147,7 @@ dialog::backdrop{background:rgba(5,10,20,.55)}
 
 <div class="wrap">
 <header class="top">
-  <div class="brand"><b>Tilawa</b><span>تلاوة</span></div>
+  <div class="brand"><b>Tilawa</b><span>تلاوة</span><small style="margin-left:auto;font-size:.7rem;color:var(--muted)">v10</small></div>
   <div class="nav">
     <select id="selSura" aria-label="Sourate"></select>
     <button class="ib" id="prev" aria-label="Page précédente">‹</button>
@@ -186,7 +187,7 @@ dialog::backdrop{background:rgba(5,10,20,.55)}
   <button id="mic" aria-label="Commencer la récitation">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
   </button>
-  <div id="msg"><div id="msgMain">Touche le micro et récite, depuis n’importe quel mot de la page.</div><div id="diag"></div><div id="dbg"></div><button type="button" class="chip" id="eng"></button></div>
+  <div id="msg"><div id="msgMain">Touche le micro et récite, depuis n’importe quel mot de la page.</div><div id="diag"></div><div id="dbg"></div><button type="button" class="chip" id="eng"></button><button type="button" class="chip" id="mt">Tester le micro</button></div>
   <button class="ib" id="playPage" aria-label="Écouter la page">▶︎ Page</button>
 </div></div>
 
@@ -708,7 +709,7 @@ async function startAudio(){
   const AC=window.AudioContext||window.webkitAudioContext;
   if(!A.ac)A.ac=new AC();
   try{A.ac.resume()}catch(e){}
-  A.stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:true}});
+  A.stream=await navigator.mediaDevices.getUserMedia({audio:true});
   await Promise.race([A.ac.resume(),sleep(1500)]);
   A.src=A.ac.createMediaStreamSource(A.stream);
   A.node=A.ac.createScriptProcessor(4096,1,1);
@@ -797,6 +798,58 @@ async function drainModel(){
   const t0=Date.now();
   while((A.busy||A.queue.length)&&Date.now()-t0<15000){$('#msgMain').innerHTML='<b>Analyse finale…</b>';await sleep(200)}
 }
+function wavBlob(f32,sr){
+  const n=f32.length,buf=new ArrayBuffer(44+n*2),v=new DataView(buf);
+  const w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,f32[i]));v.setInt16(44+i*2,x<0?x*32768:x*32767,true)}
+  return new Blob([buf],{type:'audio/wav'});
+}
+async function micTest(){
+  if(S.listening){toast('Arrête d’abord le micro.');return}
+  const btn=$('#mt');btn.disabled=true;
+  let ac=null,st=null;
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    ac=new AC();try{ac.resume()}catch(e){}
+    st=await navigator.mediaDevices.getUserMedia({audio:true});
+    await Promise.race([ac.resume(),sleep(1500)]);
+    const src=ac.createMediaStreamSource(st),node=ac.createScriptProcessor(4096,1,1),chunks=[];
+    let pk=0,sum=0,n=0;
+    node.onaudioprocess=ev=>{const d=new Float32Array(ev.inputBuffer.getChannelData(0));chunks.push(d);for(let i=0;i<d.length;i++){const a=Math.abs(d[i]);if(a>pk)pk=a;sum+=d[i]*d[i]}n+=d.length};
+    src.connect(node);node.connect(ac.destination);
+    $('#msgMain').innerHTML='<b>Test : récite pendant 5 secondes…</b>';setDiag('');$('#heard').textContent='';
+    await sleep(5000);
+    node.onaudioprocess=null;try{node.disconnect();src.disconnect()}catch(e){}
+    st.getTracks().forEach(t=>t.stop());st=null;
+    const sr=ac.sampleRate,all=new Float32Array(n);let o=0;for(const c of chunks){all.set(c,o);o+=c.length}
+    const rms=Math.sqrt(sum/Math.max(1,n));
+    const rep=`Micro : pic ${Math.round(pk*100)} %, niveau ${(rms*100).toFixed(1)} %, ${sr} Hz. ${pk<.05?'Signal très faible.':'Niveau correct.'}`;
+    setDiag(rep+' Lecture…');
+    const g=pk>0&&pk<.7?.7/pk:1,play=new Float32Array(n);for(let i=0;i<n;i++)play[i]=all[i]*g;
+    const au=new Audio(URL.createObjectURL(wavBlob(play,sr)));
+    try{await au.play();await new Promise(r=>{au.onended=r;setTimeout(r,6500)})}catch(e){}
+    if(M.state!=='ready'){
+      if(!LS.get('modelOk',false)){setDiag(rep+' Touche d’abord le micro une fois pour télécharger le modèle.');return}
+      setDiag(rep+' Chargement du modèle…');await loadModel();
+    }
+    setDiag(rep+' Analyse par le modèle…');
+    const f16=resample(all,sr,16000);
+    if(pk>0&&pk<.5){const k=.7/pk;for(let i=0;i<f16.length;i++)f16[i]*=k}
+    const t0=Date.now(),text=((await transcribe(f16))||'').trim();
+    setDiag(`${rep} Modèle (${((Date.now()-t0)/1000).toFixed(1)} s) : ${text?'« '+text+' »':'rien reconnu'}`);
+    $('#heard').textContent=text;
+  }catch(e){
+    const nm=e&&e.name;
+    setDiag(nm==='NotAllowedError'?'Micro refusé pour ce site.':'Test impossible : '+((e&&e.message)||e));
+  }finally{
+    try{st&&st.getTracks().forEach(t=>t.stop())}catch(e){}
+    try{ac&&ac.close()}catch(e){}
+    btn.disabled=false;setMsg();
+  }
+}
+$('#mt').onclick=micTest;
 async function startModel(){
   if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&(window.AudioContext||window.webkitAudioContext)&&window.Worker)){
     setDiag('Ce navigateur ne permet pas le modèle Coran. Choisis « reconnaissance de Safari ».');return}
