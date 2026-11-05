@@ -646,8 +646,10 @@ const WORKER_SRC=[
 "    if(p&&p.file&&p.total){fl[p.file]={l:p.loaded||0,t:p.total};self.postMessage({type:'progress',pct:pct()})}}});",
 "   self.postMessage({type:'ready'});",
 "  }else if(m.type==='run'){",
-"   const o=await asr(m.audio,{language:'arabic',task:'transcribe'});",
-"   self.postMessage({type:'text',id:m.id,text:(o&&o.text)||''});",
+"   let o=await asr(m.audio,{language:'arabic',task:'transcribe'});",
+"   let t=(o&&o.text)||'',mode=1;",
+"   if(!t.trim()){o=await asr(m.audio);t=(o&&o.text)||'';mode=2}",
+"   self.postMessage({type:'text',id:m.id,text:t,mode:mode});",
 "  }",
 " }catch(err){self.postMessage({type:'error',id:m.id,message:String((err&&err.message)||err)})}",
 "};"
@@ -660,7 +662,7 @@ function modelWorker(){
     const m=e.data;
     if(m.type==='progress'){M.pct=m.pct;if(M.state==='loading')setDiag(`Téléchargement du modèle Coran… ${m.pct}%`);if(M.onp)M.onp(m.pct)}
     else if(m.type==='ready'){M.state='ready';if(M.res)M.res()}
-    else if(m.type==='text'){const p=M.pending.get(m.id);M.pending.delete(m.id);if(p)p.res(m.text)}
+    else if(m.type==='text'){M.mode=m.mode;const p=M.pending.get(m.id);M.pending.delete(m.id);if(p)p.res(m.text)}
     else if(m.type==='error'){
       if(M.state==='loading'){M.state='idle';if(M.rej)M.rej(new Error(m.message))}
       else{const p=M.pending.get(m.id);M.pending.delete(m.id);if(p)p.rej(new Error(m.message))}
@@ -745,7 +747,7 @@ function onAudio(x){
 }
 function showDbg(rms,thr){
   const e=$('#dbg');if(!e)return;
-  e.textContent=`niveau ${(rms*100).toFixed(1)} · seuil ${(thr*100).toFixed(1)} · envoyés ${A.sent} · reçus ${A.got}${A.ms?' · '+(A.ms/1000).toFixed(1)+' s':''}`;
+  e.textContent=`niveau ${(rms*100).toFixed(1)} · seuil ${(thr*100).toFixed(1)} · envoyés ${A.sent} · reçus ${A.got}${A.ms?' · '+(A.ms/1000).toFixed(1)+' s':''}${A.got?` · passage ${(A.lastDur||0).toFixed(1)} s, pic ${Math.round((A.lastPk||0)*100)}% · texte ${A.last?A.last.length+' car.':'vide'} · essai ${A.mode||1}`:''}`;
 }
 function flushSeg(){
   if(!A.ac)return;
@@ -756,6 +758,7 @@ function flushSeg(){
   if(voiced<350)return;
   const f=resample(all,sr,16000);
   let pk=0;for(let i=0;i<f.length;i++){const v=Math.abs(f[i]);if(v>pk)pk=v}
+  A.lastDur=f.length/16000;A.lastPk=pk;
   if(pk>0&&pk<.5){const g=.7/pk;for(let i=0;i<f.length;i++)f[i]*=g}
   A.sent++;A.queue.push(f);if(A.queue.length>3)A.queue.shift();
   pump();
@@ -771,14 +774,19 @@ async function pump(){
       try{text=await transcribe(f)}catch(e){setDiag('Erreur du modèle : '+e.message);continue}
       A.ms=Date.now()-t0;A.got++;showDbg(A.rms,A.thr||0);
       if(!S.listening)break;
-      text=(text||'').trim();
+      text=(text||'').trim();A.last=text;A.mode=M.mode;showDbg(A.rms,A.thr||0);
+      if(normalize(text).length<2){
+        $('#heard').textContent=text?('« '+text+' »'):'(le modèle n’a rien compris)';
+        setDiag(text?'Le modèle a répondu sans texte arabe.':'Le modèle n’a rien reconnu dans ce passage.');
+        clearTimeout(hideT);hideT=setTimeout(()=>{$('#heard').textContent=''},4000);continue;
+      }
       if(normalize(text).length>=2){
         evCount++;
         feed(PW,S.ses,text.split(/\s+/).filter(Boolean),THR[C.sens]);
         $('#heard').textContent=text;clearTimeout(hideT);hideT=setTimeout(()=>{$('#heard').textContent=''},4000);
         setMsg();paint();
         if(S.ses&&S.ses.done)onPageDone();
-      }else $('#heard').textContent='';
+      }
       setDiag(A.queue.length?'Analyse…':'Prêt. Continue, fais une courte pause entre les versets.');
     }
   }finally{A.busy=false}
