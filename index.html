@@ -7,92 +7,108 @@
 <title>Tilawa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Manrope:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Scheherazade+New:wght@400;700&family=Noto+Naskh+Arabic:wght@400;600&family=Manrope:wght@400;600;800&display=swap">
 <style>
-/* Mise en page : un feuillet de mushaf centré, une barre d'outils en haut, un dock micro en bas. */
+/* Mise en page : une feuille de mushaf encadrée, barre d'outils en haut, dock micro en bas. */
 :root{
-  --bg:#F3F5F9; --surface:#FFFFFF; --ink:#142033; --muted:#5B677D; --line:#D6DDE9;
-  --accent:#1F3F8F; --on-accent:#FFFFFF; --brass:#9A6A14; --brass-soft:rgba(154,106,20,.16);
-  --ok:#14804F; --approx:#A86A00; --bad:#C23333; --skip:#6F7B90;
-  --ar:'Amiri Quran','KFGQPC Uthmanic Script HAFS','Scheherazade New','Noto Naskh Arabic',serif;
+  --bg:#EDF0F6; --paper:#FDFCF9; --surface:#FFFFFF; --ink:#16213A; --muted:#5A667C; --line:#D5DCE8;
+  --accent:#23459B; --on-accent:#FFFFFF; --brass:#946510; --brass-soft:rgba(148,101,16,.14); --brass-line:rgba(148,101,16,.45);
+  --ok:#13794B; --approx:#A86A00; --bad:#C23333; --skip:#6F7B90;
+  --ar:'Amiri Quran','Scheherazade New','Noto Naskh Arabic',serif;
   --ui:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --scale:1;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0B1322; --surface:#121D33; --ink:#E8EDF6; --muted:#9BA8BF; --line:#25314B;
-  --accent:#8AA6FF; --on-accent:#0B1322; --brass:#E2B964; --brass-soft:rgba(226,185,100,.18);
+  --bg:#0A111F; --paper:#101A2E; --surface:#14203A; --ink:#E8EDF6; --muted:#9BA8BF; --line:#25314B;
+  --accent:#8AA6FF; --on-accent:#0B1322; --brass:#E2B964; --brass-soft:rgba(226,185,100,.16); --brass-line:rgba(226,185,100,.4);
   --ok:#3DD598; --approx:#F2B34A; --bad:#FF7070; --skip:#8B97AD; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0B1322; --surface:#121D33; --ink:#E8EDF6; --muted:#9BA8BF; --line:#25314B;
-  --accent:#8AA6FF; --on-accent:#0B1322; --brass:#E2B964; --brass-soft:rgba(226,185,100,.18);
+  --bg:#0A111F; --paper:#101A2E; --surface:#14203A; --ink:#E8EDF6; --muted:#9BA8BF; --line:#25314B;
+  --accent:#8AA6FF; --on-accent:#0B1322; --brass:#E2B964; --brass-soft:rgba(226,185,100,.16); --brass-line:rgba(226,185,100,.4);
   --ok:#3DD598; --approx:#F2B34A; --bad:#FF7070; --skip:#8B97AD; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--ui);min-height:100vh;
-  padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));
-  padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+  padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 button,select,input{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.wrap{max-width:760px;margin:0 auto}
-header.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px;border-bottom:1px solid var(--line)}
+.wrap{max-width:780px;margin:0 auto}
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 0;border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
-.brand b{font-size:1.15rem;letter-spacing:.02em}
-.brand span{font-family:var(--ar);font-size:1.3rem;color:var(--brass)}
+.brand b{font-size:1.1rem;letter-spacing:.03em}
+.brand span{font-family:var(--ar);font-size:1.35rem;color:var(--brass)}
 .nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.nav select,.nav input{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.nav select,.nav input{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 10px;min-width:0}
 .nav select{flex:1 1 170px}
-.nav input[type=number]{width:78px}
-.ib{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-weight:600}
-.tabs{display:flex;gap:4px;margin-top:8px}
-.tabs button{flex:1;background:transparent;border:0;border-bottom:2px solid transparent;padding:8px 4px;font-weight:600;color:var(--muted)}
+.nav input[type=number]{width:74px;text-align:center}
+.ib{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-weight:700}
+.tabs{display:flex;gap:4px;margin-top:6px}
+.tabs button{flex:1;background:transparent;border:0;border-bottom:2px solid transparent;padding:9px 4px;font-weight:700;color:var(--muted)}
 .tabs button[aria-selected=true]{color:var(--accent);border-color:var(--accent)}
 main{padding-top:14px}
 .view{display:none}.view.on{display:block}
-#sheet{container-type:inline-size;background:var(--surface);border:1px solid var(--line);border-radius:6px;
-  outline:1px solid var(--brass-soft);outline-offset:4px;padding:14px 10px 16px;margin:6px 4px 0}
-.shead{display:flex;justify-content:space-between;color:var(--muted);font-size:.8rem;padding:0 4px 8px}
+
+/* feuille de mushaf */
+#sheet{--fs:26px;background:var(--paper);border:1px solid var(--brass);border-radius:6px;
+  box-shadow:inset 0 0 0 5px var(--paper),inset 0 0 0 6px var(--brass-line),0 8px 26px rgba(10,20,40,.10);
+  padding:20px 16px 12px;margin:2px 0 0}
+.shead{display:flex;justify-content:space-between;direction:rtl;font-family:var(--ar);color:var(--brass);font-size:1.05rem;padding:0 2px 8px;border-bottom:1px solid var(--brass-line);margin-bottom:6px}
 #lines{direction:rtl}
-.ln{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;
-  font-family:var(--ar);font-size:clamp(16px,calc(100cqw / 21 * var(--scale)),38px);line-height:2.05}
-.ln.short{justify-content:center;gap:0 .45em}
-.w{padding:0 .07em;border-radius:.35em;cursor:pointer;transition:background .15s,color .15s}
+.ln{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:baseline;white-space:nowrap;
+  font-family:var(--ar);font-size:var(--fs);line-height:2.15}
+.ln.short{justify-content:center;gap:0 .5em}
+#lines.flow{display:block;text-align:justify;text-align-last:start;font-family:var(--ar);font-size:var(--fs);line-height:2.35}
+#lines.flow .ln{display:contents;white-space:normal}
+.w{padding:0 .08em;border-radius:.35em;cursor:pointer;transition:background .15s,color .15s}
 .w:hover{background:var(--brass-soft)}
 .w.ok{color:var(--ok)}
 .w.approx{color:var(--approx)}
-.w.bad{color:var(--bad);text-decoration:underline wavy;text-underline-offset:.25em}
-.w.skip{color:var(--skip);text-decoration:underline dotted;text-underline-offset:.25em}
-.w.na{opacity:.55}
+.w.bad{color:var(--bad);text-decoration:underline wavy;text-underline-offset:.28em}
+.w.skip{color:var(--skip);text-decoration:underline dotted;text-underline-offset:.28em}
+.w.na{opacity:.5}
 .w.cur{background:var(--brass-soft);box-shadow:0 2px 0 var(--brass)}
-.w.hid{color:transparent;background:var(--line);text-shadow:none;user-select:none}
+.w.hid{color:transparent;background:var(--line);user-select:none}
 .w.pl{background:var(--brass-soft)}
-.end{color:var(--brass);padding:0 .12em;font-size:.8em;cursor:pointer}
-.sura{margin:.4em 0;text-align:center;border:1px solid var(--brass);border-radius:4px;padding:.15em 0;
-  font-family:var(--ar);font-size:clamp(18px,calc(100cqw / 17),40px);color:var(--brass);background:var(--brass-soft)}
-.bism{text-align:center;font-family:var(--ar);font-size:clamp(16px,calc(100cqw / 19 * var(--scale)),36px);line-height:2}
-.stat{display:flex;gap:12px;flex-wrap:wrap;margin:12px 4px 0;font-size:.85rem;color:var(--muted)}
+.end{display:inline-grid;place-items:center;min-width:1.7em;height:1.7em;border:1px solid var(--brass);border-radius:50%;
+  color:var(--brass);font-size:.6em;line-height:1;margin:0 .3em;padding:0 .2em;cursor:pointer;vertical-align:middle}
+.mk{color:var(--brass);font-size:.8em;padding:0 .1em}
+.sura{display:flex;align-items:center;justify-content:center;gap:.7em;margin:.45em 0;padding:.05em .6em;
+  border-block:1px solid var(--brass);background:linear-gradient(90deg,transparent,var(--brass-soft),transparent);
+  font-family:var(--ar);font-size:calc(var(--fs) * 1.05);color:var(--brass);white-space:nowrap;line-height:1.9}
+.sura::before,.sura::after{content:"";width:.38em;height:.38em;background:var(--brass);transform:rotate(45deg);flex:none}
+.bism{text-align:center;font-family:var(--ar);font-size:var(--fs);line-height:2.1}
+.pgno{display:grid;place-items:center;margin:8px auto 0;width:2.4em;height:2.4em;border:1px solid var(--brass);border-radius:50%;
+  font-family:var(--ar);color:var(--brass);font-size:1rem;direction:rtl}
+#heard{min-height:1.6em;margin:10px 4px 0;font-family:var(--ar);direction:rtl;color:var(--muted);font-size:1.15rem;text-align:center}
+.stat{display:flex;gap:12px;flex-wrap:wrap;margin:10px 4px 0;font-size:.85rem;color:var(--muted)}
 .stat b{color:var(--ink)}
 .dot{display:inline-block;width:.6em;height:.6em;border-radius:50%;margin-right:.35em}
-#heard{min-height:1.4em;margin:6px 4px 0;font-family:var(--ar);direction:rtl;color:var(--muted);font-size:1.05rem}
+
+/* dock micro */
 .dock{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);
   padding:10px max(14px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-right,0px))}
-.dock .in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px}
-#mic{flex:none;width:64px;height:64px;border-radius:50%;border:0;background:var(--accent);color:var(--on-accent);
+.dock .in{max-width:780px;margin:0 auto;display:flex;align-items:center;gap:12px}
+#mic{flex:none;width:68px;height:68px;border-radius:50%;border:0;background:var(--accent);color:var(--on-accent);
   display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-#mic svg{width:28px;height:28px}
+#mic svg{width:30px;height:30px}
 #mic.live{background:var(--bad);color:#fff;animation:pulse 1.6s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(194,51,51,.5)}100%{box-shadow:0 0 0 18px rgba(194,51,51,0)}}
 @media (prefers-reduced-motion:reduce){#mic.live{animation:none}.w{transition:none}}
-#msg{flex:1;min-width:0;font-size:.9rem;color:var(--muted)}
-#msg b{color:var(--ink)}
+#msg{flex:1;min-width:0}
+#msgMain{font-size:.92rem;color:var(--muted)}
+#msgMain b{color:var(--ink)}
+#diag{font-size:.78rem;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
 .dock .ib{flex:none}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;margin:0 0 12px}
+
+/* cartes et formulaires */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 12px}
 .card h3{margin:0 0 8px;font-size:1rem}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
 .row label{flex:1 1 150px;color:var(--muted)}
-.row select,.row input[type=text],.row input[type=password]{flex:1 1 180px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
-.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:8px;padding:9px 14px;font-weight:700}
+.row select,.row input[type=text],.row input[type=password]{flex:1 1 180px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-width:0}
+.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:10px;padding:10px 14px;font-weight:700}
 .btn.alt{background:transparent;color:var(--accent);border:1px solid var(--accent)}
 .btn.warn{background:transparent;color:var(--bad);border:1px solid var(--bad)}
 .muted{color:var(--muted)}
@@ -100,16 +116,16 @@ main{padding-top:14px}
 .list{list-style:none;margin:0;padding:0}
 .list li{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
 .list li:first-child{border-top:0}
-.ar{font-family:var(--ar);font-size:1.25rem;direction:rtl}
+.ar{font-family:var(--ar);font-size:1.3rem;direction:rtl}
 progress{width:100%;height:10px;accent-color:var(--accent)}
-dialog{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;max-width:min(92vw,460px);width:100%;padding:16px}
+dialog{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;max-width:min(92vw,460px);width:100%;padding:16px}
 dialog::backdrop{background:rgba(5,10,20,.55)}
 .lock{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:20px}
 .lock form{width:min(92vw,320px);display:grid;gap:12px;text-align:center}
 .lock input{text-align:center;font-size:1.4rem;letter-spacing:.4em;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
 .err{color:var(--bad)}
 .ok-t{color:var(--ok)}
-#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(120px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);
   padding:8px 14px;border-radius:8px;font-size:.85rem;z-index:40;max-width:90vw}
 </style>
 </head>
@@ -143,8 +159,9 @@ dialog::backdrop{background:rgba(5,10,20,.55)}
 <main>
   <section class="view on" id="v-read">
     <div id="sheet">
-      <div class="shead"><span id="shJuz"></span><span id="shPage"></span></div>
+      <div class="shead"><span id="shSura"></span><span id="shJuz"></span></div>
       <div id="lines" aria-live="off"></div>
+      <div class="pgno" id="pgno"></div>
     </div>
     <div id="heard" aria-live="polite"></div>
     <div class="stat" id="stat"></div>
@@ -165,7 +182,7 @@ dialog::backdrop{background:rgba(5,10,20,.55)}
   <button id="mic" aria-label="Commencer la récitation">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
   </button>
-  <div id="msg">Touche le micro et récite. Touche un mot pour commencer à cet endroit.</div>
+  <div id="msg"><div id="msgMain">Touche le micro et récite, depuis n’importe quel mot de la page.</div><div id="diag"></div></div>
   <button class="ib" id="playPage" aria-label="Écouter la page">▶︎ Page</button>
 </div></div>
 
@@ -211,46 +228,96 @@ function matchWord(e,h,thr){
   const s=Math.max(sim(e.n,h.n),sim(e.sk,h.sk));
   return {s,k:s>=thr?'approx':null};
 }
-/* exp : tableau de mots attendus {n,sk,status,heard}. ses : {pos}. heardWords : mots bruts entendus. */
+function joined(a,b){const n=a.n+b.n;return {n,sk:skeleton(n)}}
+function mark(w,k,raw){w.status=k;w.heard=raw}
+/* Trouve où la récitation commence dans la page : deux mots consécutifs identiques (ou un mot long et unique). */
+function findStart(exp,from,H,i,thr){
+  const h0=H[i],h1=H[i+1];
+  let best=-1,bd=1e9,cnt=0;
+  for(let j=0;j<exp.length;j++){
+    if(matchWord(exp[j],h0,thr).k!=='ok')continue;
+    if(h1){if(j+1>=exp.length||!matchWord(exp[j+1],h1,thr).k)continue}
+    else if(h0.sk.length<4)continue;
+    cnt++;const d=Math.abs(j-from);if(d<bd){bd=d;best=j}
+  }
+  if(!h1&&cnt!==1)return -1;
+  return best;
+}
+/* Parmi les hypothèses du moteur vocal, garde celle qui colle le mieux aux mots attendus. */
+function pickAlt(exp,ses,alts,thr){
+  if(alts.length<2)return alts[0]||'';
+  let bi=0,bs=-1;
+  alts.forEach((a,idx)=>{
+    let s=0;
+    for(const r of a.split(/\s+/)){
+      const h=prep(r);if(!h.n)continue;
+      for(let k=0;k<8&&ses.pos+k<exp.length;k++){if(matchWord(exp[ses.pos+k],h,thr).k){s++;break}}
+    }
+    if(s>bs){bs=s;bi=idx}
+  });
+  return alts[bi]||'';
+}
 function feed(exp,ses,heardWords,thr){
-  for(const raw of heardWords){
-    const h=prep(raw); if(!h.n)continue;
-    let pos=ses.pos; if(pos>=exp.length){ses.done=true;break}
+  let H=heardWords.map(r=>({raw:r,...prep(r)})).filter(h=>h.n);
+  if(ses.pend&&ses.pend.length){H=ses.pend.concat(H);ses.pend=[]}
+  let i=0;
+  while(i<H.length){
+    if(ses.pos>=exp.length){ses.done=true;ses.carry=(ses.carry||[]).concat(H.slice(i).map(h=>h.raw));break}
+    if(!ses.locked){
+      const j=findStart(exp,ses.pos,H,i,thr);
+      if(j<0){if(i>=H.length-1){ses.pend=[H[i]];break}i++;continue}
+      ses.pos=j;ses.locked=true;
+    }
+    const h=H[i],pos=ses.pos;
     const m0=matchWord(exp[pos],h,thr);
-    if(m0.k){exp[pos].status=m0.k;exp[pos].heard=raw;ses.pos=pos+1;continue}
+    if(m0.k){mark(exp[pos],m0.k,h.raw);ses.pos=pos+1;i++;continue}
+    // un mot attendu entendu en deux morceaux
+    if(i+1<H.length){
+      const mm=matchWord(exp[pos],joined(h,H[i+1]),thr);
+      if(mm.k&&mm.s>=.85){mark(exp[pos],'ok',h.raw+' '+H[i+1].raw);ses.pos=pos+1;i+=2;continue}
+    }
+    // deux mots attendus entendus en un seul
+    if(pos+1<exp.length){
+      const mm=matchWord(joined(exp[pos],exp[pos+1]),h,thr);
+      if(mm.k&&mm.s>=.85){mark(exp[pos],'ok',h.raw);mark(exp[pos+1],'ok',h.raw);ses.pos=pos+2;i++;continue}
+    }
+    // mots sautés (jusqu'à 3)
     let best=-1,bs=0;
     for(let k=1;k<=3&&pos+k<exp.length;k++){
       const m=matchWord(exp[pos+k],h,thr);
-      if(m.k==='ok'&&exp[pos+k].sk.length>=3&&m.s-k*.04>bs){best=k;bs=m.s-k*.04}
+      if(m.k==='ok'&&exp[pos+k].sk.length>=(k===1?2:3)&&m.s-k*.04>bs){best=k;bs=m.s-k*.04}
     }
     if(best>0){
       for(let j=0;j<best;j++){exp[pos+j].status=exp[pos+j].n.length<=2?'approx':'skip';exp[pos+j].heard=''}
-      exp[pos+best].status='ok';exp[pos+best].heard=raw;ses.pos=pos+best+1;continue;
+      mark(exp[pos+best],'ok',h.raw);ses.pos=pos+best+1;i++;continue;
     }
+    // correction d'une faute récente
     let fixed=false;
     for(let k=1;k<=3&&pos-k>=0;k++){
       const w=exp[pos-k];
-      if((w.status==='bad'||w.status==='skip')&&matchWord(w,h,thr).k){w.status='ok';w.heard=raw;w.fixed=true;fixed=true;break}
+      if((w.status==='bad'||w.status==='skip')&&matchWord(w,h,thr).k){w.status='ok';w.heard=h.raw;w.fixed=true;fixed=true;break}
     }
-    if(fixed)continue;
+    if(fixed){i++;continue}
+    // répétition d'un mot déjà dit
     let rep=false;
     for(let k=1;k<=2&&pos-k>=0;k++){if(matchWord(exp[pos-k],h,thr).k)rep=true}
-    if(rep)continue;
-    exp[pos].status='bad';exp[pos].heard=raw;ses.pos=pos+1;
+    if(rep){i++;continue}
+    mark(exp[pos],'bad',h.raw);ses.pos=pos+1;i++;
   }
   if(ses.pos>=exp.length)ses.done=true;
 }
 //</engine>
 
 /* ------------------------------------------------------------------ réglages */
-const DEF={theme:'auto',scale:1,sens:'normal',hifz:'off',reciter:'Alafasy_128kbps',speed:1,repeat:1,api:'https://api.quran.com/api/v4'};
+const DEF={theme:'auto',scale:1,sens:'normal',hifz:'off',reciter:'Alafasy_128kbps',speed:1,repeat:1,font:'amiri',layout:'auto',api:'https://api.quran.com/api/v4'};
 let C=Object.assign({},DEF,LS.get('cfg',{}));
 const saveC=()=>LS.set('cfg',C);
 const THR={strict:.85,normal:.72,lenient:.6};
+const FONTS={amiri:"'Amiri Quran'",sch:"'Scheherazade New'",naskh:"'Noto Naskh Arabic'"};
 function applyTheme(){
-  if(C.theme==='auto')document.documentElement.removeAttribute('data-theme');
-  else document.documentElement.setAttribute('data-theme',C.theme);
-  document.documentElement.style.setProperty('--scale',C.scale);
+  const r=document.documentElement;
+  if(C.theme==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',C.theme);
+  r.style.setProperty('--ar',(FONTS[C.font]||FONTS.amiri)+",'Amiri Quran','Scheherazade New','Noto Naskh Arabic',serif");
 }
 applyTheme();
 let tt;function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(tt);tt=setTimeout(()=>e.hidden=true,3500)}
@@ -294,10 +361,11 @@ async function getPage(p){
   if(mem.has(p))return mem.get(p);
   let d=await idbGet(p);
   if(!d){
-    let j=await fj(`${C.api}/verses/by_page/${p}?words=true&word_fields=text_uthmani,line_number,page_number&per_page=50`);
+    const q=`words=true&word_fields=text_uthmani,line_number,page_number&per_page=50`;
+    let j=await fj(`${C.api}/verses/by_page/${p}?${q}`);
     d=parsePage(j,p);
     let nx=j.pagination&&j.pagination.next_page;
-    while(nx){const j2=await fj(`${C.api}/verses/by_page/${p}?words=true&word_fields=text_uthmani,line_number,page_number&per_page=50&page=${nx}`);
+    while(nx){const j2=await fj(`${C.api}/verses/by_page/${p}?${q}&page=${nx}`);
       d.verses.push(...parsePage(j2,p).verses);nx=j2.pagination&&j2.pagination.next_page}
     await idbPut(p,d);
   }
@@ -307,17 +375,37 @@ const ar=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
 const pad3=n=>String(n).padStart(3,'0');
 
 /* ------------------------------------------------------------------ état */
-const S={page:LS.get('page',1),pw:[],ses:null,listening:false,rec:null,run:null,bism:null};
+const S={page:LS.get('page',1),ses:null,listening:false,rec:null,run:null,bism:null,turning:false};
 let PW=[];
 function hashStr(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)}
+const newSes=(o={})=>Object.assign({pos:0,done:false,locked:false,pend:[],carry:[]},o);
+
+/* ------------------------------------------------------------------ mise en page */
+function isFlow(){return C.layout==='flow'||(C.layout!=='mushaf'&&innerWidth<700)}
+function fit(){
+  const sheet=$('#sheet'),box=$('#lines');
+  if(!sheet||!box||!box.children.length||!sheet.offsetParent)return;
+  const flow=isFlow();box.classList.toggle('flow',flow);
+  const cs=getComputedStyle(sheet),avail=sheet.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  if(flow){sheet.style.setProperty('--fs',(Math.max(20,Math.min(38,avail/12.5))*C.scale).toFixed(1)+'px');return}
+  sheet.style.setProperty('--fs','30px');
+  let need=0;
+  for(const L of box.querySelectorAll('.ln:not(.short)')){
+    let w=0;for(const c of L.children)w+=c.getBoundingClientRect().width;need=Math.max(need,w);
+  }
+  const fs=need?Math.max(12,Math.min(46,30*avail/need*.985)):26;
+  sheet.style.setProperty('--fs',(fs*Math.min(1,C.scale)).toFixed(1)+'px');
+}
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(fit,150)});
+if(document.fonts){document.fonts.ready.then(()=>fit());if(document.fonts.addEventListener)document.fonts.addEventListener('loadingdone',()=>fit())}
 
 async function showPage(p,opts={}){
   p=Math.min(604,Math.max(1,p|0));
   S.page=p;LS.set('page',p);$('#pageIn').value=p;
-  $('#lines').innerHTML='<div class="muted" style="direction:ltr;padding:24px 0;text-align:center">Chargement…</div>';
+  $('#lines').innerHTML='<div class="muted" style="direction:ltr;padding:24px 0;text-align:center;font-family:var(--ui);font-size:15px">Chargement…</div>';
   let d;
   try{d=await getPage(p);if(!S.bism){try{const d1=await getPage(1);S.bism=d1.verses[0].words.filter(w=>w.ty==='word').map(w=>w.t).join(' ')}catch(e){}}}
-  catch(e){$('#lines').innerHTML=`<div class="err" style="direction:ltr;padding:20px">Impossible de charger la page ${p} (${esc(e.message)}). Vérifie ta connexion ou l'adresse de l'API dans les réglages.<br><br><button class="btn" id="retry">Réessayer</button></div>`;
+  catch(e){$('#lines').innerHTML=`<div class="err" style="direction:ltr;padding:20px;font-family:var(--ui);font-size:15px">Impossible de charger la page ${p} (${esc(e.message)}). Vérifie ta connexion ou l'adresse de l'API dans les réglages.<br><br><button class="btn" id="retry">Réessayer</button></div>`;
     $('#retry').onclick=()=>showPage(p);return}
   if(S.page!==p)return;
   PW=[];const lines=[];let cur=null;
@@ -333,8 +421,8 @@ async function showPage(p,opts={}){
         const hid=C.hifz==='all'||(C.hifz==='first'&&w.p!==first.p)||(C.hifz==='half'&&w.p!==first.p&&hashStr(v.key+w.p)%2===0);
         PW.push({key:v.key,pos:w.p,t:w.t,n:pr.n,sk:pr.sk,status:null,heard:'',hid:!!hid,rev:false});
         cur.items.push(`<span class="w" data-i="${idx}">${esc(w.t)}</span>`);
-      }else if(w.ty==='end'){cur.items.push(`<span class="end" data-k="${v.key}">﴿${esc(w.t)}﴾</span>`)}
-      else cur.items.push(`<span class="end">${esc(w.t)}</span>`);
+      }else if(w.ty==='end'){cur.items.push(`<span class="end" data-k="${v.key}">${esc(w.t)}</span>`)}
+      else cur.items.push(`<span class="mk">${esc(w.t)}</span>`);
     }
   }
   const html=lines.map(L=>{
@@ -343,17 +431,18 @@ async function showPage(p,opts={}){
       h+=`<div class="sura">سورة ${esc(ch?ch.ar:'')}</div>`;
       if(L.head!==1&&L.head!==9&&S.bism)h+=`<div class="bism">${esc(S.bism)}</div>`;}
     const short=L.items.length<4&&lines.length>1;
-    return h+`<div class="ln${short?' short':''}">${L.items.join('')}</div>`;
+    return h+`<div class="ln${short?' short':''}">${L.items.join(' ')}</div>`;
   }).join('');
   $('#lines').innerHTML=html;
   const juz=d.verses[0]&&d.verses[0].juz;
-  $('#shJuz').textContent=juz?`Juz’ ${juz}`:'';
-  $('#shPage').textContent=`Page ${p} / 604`;
   const ch0=d.verses[0]?+d.verses[0].key.split(':')[0]:1;
+  $('#shJuz').textContent=juz?`الجزء ${ar(juz)}`:'';
+  $('#shSura').textContent=CH[ch0-1]?`سورة ${CH[ch0-1].ar}`:'';
+  $('#pgno').textContent=ar(p);
   $('#selSura').value=String(ch0);
-  S.ses={pos:opts.start||0,done:false};
+  S.ses=newSes({pos:opts.start||0,locked:!!opts.start});
   if(opts.start)for(let i=0;i<opts.start;i++)PW[i].status='na';
-  paint();
+  fit();paint();
 }
 
 function paint(){
@@ -363,7 +452,7 @@ function paint(){
     let c='w';
     if(w.status)c+=' '+w.status;
     if(w.hid&&!w.rev&&w.status!=='ok'&&w.status!=='approx')c+=' hid';
-    if(S.listening&&S.ses&&S.ses.pos===i)c+=' cur';
+    if(S.listening&&S.ses&&S.ses.locked&&S.ses.pos===i)c+=' cur';
     sp.className=c;
   }
   const cnt={ok:0,approx:0,bad:0,skip:0};
@@ -371,11 +460,30 @@ function paint(){
   const tot=cnt.ok+cnt.approx+cnt.bad+cnt.skip;
   $('#stat').innerHTML=tot?`<span><b>${tot}</b> mots suivis</span><span><b>${Math.round(100*(cnt.ok+cnt.approx)/tot)}%</b> corrects</span><span><b>${cnt.bad}</b> erreurs</span><span><b>${cnt.skip}</b> oubliés</span>`:'';
   const cur=$('#lines .w.cur');
-  if(cur){const r=cur.getBoundingClientRect();if(r.top<120||r.bottom>innerHeight-130)cur.scrollIntoView({block:'center',behavior:'smooth'})}
+  if(cur){const r=cur.getBoundingClientRect();if(r.top<150||r.bottom>innerHeight-170)cur.scrollIntoView({block:'center',behavior:'smooth'})}
 }
 
 /* ------------------------------------------------------------------ reconnaissance vocale */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const STANDALONE=navigator.standalone===true||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
+let micOK=false,evCount=0,watch=null,prog={},hideT=null;
+function setDiag(t){$('#diag').textContent=t||''}
+function setMsg(){
+  const m=$('#msgMain');
+  if(S.listening)m.innerHTML=S.ses&&S.ses.locked?'<b>J’écoute…</b> suis la flèche dorée.':'<b>J’écoute…</b> commence à réciter, je trouve l’endroit.';
+  else m.textContent='Touche le micro et récite, depuis n’importe quel mot de la page.';
+}
+async function primeMic(){
+  if(micOK)return true;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return true;
+  try{const st=await navigator.mediaDevices.getUserMedia({audio:true});st.getTracks().forEach(t=>t.stop());micOK=true;await sleep(250);return true}
+  catch(e){
+    if(e&&(e.name==='NotAllowedError'||e.name==='SecurityError')){
+      setDiag('Micro refusé. Autorise-le : touche « aA » dans la barre d’adresse, Réglages du site web, Micro.');return false}
+    return true;
+  }
+}
 function newRun(){return {ok:0,approx:0,bad:0,skip:0,errs:[],pages:new Set(),t0:Date.now()}}
 function foldPage(){
   if(!S.run)return;
@@ -400,47 +508,94 @@ function foldPage(){
   }
   LS.set('srs',srs);LS.set('weak',weak);
 }
-function startListening(){
-  if(!SR){toast('La reconnaissance vocale n’est pas disponible ici. Utilise Chrome, Edge ou Safari.');return}
+async function startListening(){
+  if(!SR){toast('La reconnaissance vocale n’est pas disponible ici. Utilise Safari, Chrome ou Edge.');
+    setDiag('Ce navigateur ne propose pas la reconnaissance vocale.');return}
   if(S.listening)return;
-  S.listening=true;S.run=S.run||newRun();
-  if(!S.ses||S.ses.done){PW.forEach(w=>{w.status=null;w.heard='';w.rev=false});S.ses={pos:0,done:false}}
+  S.listening=true;
   $('#mic').classList.add('live');$('#mic').setAttribute('aria-label','Arrêter la récitation');
-  setMsg();spawnRec();paint();
-}
-function spawnRec(){
+  $('#msgMain').innerHTML='<b>Autorisation du micro…</b>';setDiag('');
+  const ok=await primeMic();
   if(!S.listening)return;
-  const r=new SR();r.lang='ar-SA';r.continuous=true;r.interimResults=true;r.maxAlternatives=1;
-  let lastFinal=-1;
-  r.onresult=e=>{
-    let interim='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const res=e.results[i],t=res[0].transcript.trim();
-      if(res.isFinal){
-        if(i<=lastFinal)continue;lastFinal=i;
-        feed(PW,S.ses,t.split(/\s+/).filter(Boolean),THR[C.sens]);
-        $('#heard').textContent='';paint();
-        if(S.ses.done)onPageDone();
-      }else interim+=' '+t;
+  if(!ok){S.listening=false;$('#mic').classList.remove('live');setMsg();return}
+  S.run=S.run||newRun();
+  if(!S.ses||S.ses.done){PW.forEach(w=>{w.status=null;w.heard='';w.rev=false});S.ses=newSes()}
+  evCount=0;prog={};
+  clearTimeout(watch);
+  watch=setTimeout(()=>{if(S.listening&&!evCount)setDiag(
+    'Aucune voix reçue. Vérifie que la dictée est activée (Réglages > Général > Clavier)'+(STANDALONE?' et ouvre l’app dans Safari, pas depuis l’écran d’accueil.':'.'))},7000);
+  setMsg();paint();
+  const r=ensureRec();
+  try{r.start()}catch(e){}
+}
+function ensureRec(){
+  if(S.rec)return S.rec;
+  const r=new SR();
+  r.lang='ar-SA';r.continuous=!IOS;r.interimResults=true;r.maxAlternatives=3;
+  r.onstart=()=>{prog={};setDiag('Micro ouvert. Récite.')};
+  r.onspeechstart=()=>setDiag('Voix détectée.');
+  r.onresult=onResult;
+  r.onerror=onErr;
+  r.onend=()=>{if(S.listening)setTimeout(()=>{if(S.listening){try{r.start()}catch(e){}}},IOS?250:120)};
+  S.rec=r;return r;
+}
+function onResult(e){
+  evCount++;clearTimeout(watch);
+  const thr=THR[C.sens];let shown='';
+  for(let i=e.resultIndex;i<e.results.length;i++){
+    const res=e.results[i];
+    const alts=[];for(let a=0;a<res.length;a++)alts.push(((res[a]&&res[a].transcript)||'').trim());
+    const p=prog[i]||(prog[i]={done:0,prev:[]});
+    if(res.isFinal){
+      const text=C.sens==='strict'?alts[0]:pickAlt(PW,S.ses,alts,thr);
+      feed(PW,S.ses,text.split(/\s+/).filter(Boolean).slice(p.done),thr);
+      delete prog[i];shown=text;
+    }else{
+      const words=(alts[0]||'').split(/\s+/).filter(Boolean);
+      let st=0;while(st<words.length&&st<p.prev.length&&words[st]===p.prev[st])st++;
+      st=Math.min(st,words.length-1);
+      if(st>p.done){feed(PW,S.ses,words.slice(p.done,st),thr);p.done=st}
+      p.prev=words;shown=alts[0]||'';
     }
-    if(interim)$('#heard').textContent=interim.trim();
-  };
-  r.onerror=e=>{
-    if(e.error==='not-allowed'||e.error==='service-not-allowed'){toast('Micro refusé. Autorise le micro pour ce site.');stopListening(true)}
-  };
-  r.onend=()=>{if(S.listening)setTimeout(spawnRec,150)};
-  S.rec=r;try{r.start()}catch(e){}
+  }
+  $('#heard').textContent=shown;
+  clearTimeout(hideT);hideT=setTimeout(()=>{$('#heard').textContent=''},2500);
+  setMsg();paint();
+  if(S.ses&&S.ses.done)onPageDone();
+}
+function onErr(e){
+  const c=e.error;
+  if(c==='no-speech'||c==='aborted')return;
+  const T={
+    'not-allowed':'Micro refusé pour ce site. Touche « aA » dans la barre d’adresse, puis Réglages du site web, Micro.',
+    'service-not-allowed':'Reconnaissance vocale bloquée. Active la dictée (Réglages > Général > Clavier) et ouvre l’app dans Safari, pas depuis l’écran d’accueil.',
+    'audio-capture':'Aucun micro détecté.',
+    'network':'La reconnaissance vocale a besoin d’Internet.',
+    'language-not-supported':'L’arabe n’est pas pris en charge par la reconnaissance vocale de cet appareil.'};
+  setDiag(T[c]||('Erreur micro : '+c));
+  if(c==='not-allowed'||c==='service-not-allowed'||c==='language-not-supported'||c==='audio-capture')stopListening(true,true);
 }
 async function onPageDone(){
-  foldPage();
-  if(S.page<604&&S.listening){await showPage(S.page+1);S.ses={pos:0,done:false};paint();setMsg()}
-  else stopListening(false);
+  if(S.turning)return;S.turning=true;
+  try{
+    const old=S.ses;
+    foldPage();
+    if(S.page<604&&S.listening){
+      await showPage(S.page+1);
+      const carry=old.carry||[];
+      S.ses.locked=true;
+      if(carry.length)feed(PW,S.ses,carry,THR[C.sens]);
+      setMsg();paint();
+    }else stopListening(false);
+  }finally{S.turning=false}
 }
-function stopListening(silent){
+function stopListening(silent,keepDiag){
   const was=S.listening;S.listening=false;
+  clearTimeout(watch);
   try{S.rec&&S.rec.abort()}catch(e){}
   $('#mic').classList.remove('live');$('#mic').setAttribute('aria-label','Commencer la récitation');
   $('#heard').textContent='';
+  if(!keepDiag)setDiag('');
   if(was&&S.run){
     const attended=PW.some(w=>w.status&&w.status!=='na');
     if(attended&&!(S.ses&&S.ses.done&&S.run.pages.has(S.page)))foldPage();
@@ -449,11 +604,7 @@ function stopListening(silent){
   }
   setMsg();paint();
 }
-function setMsg(){
-  const m=$('#msg');
-  if(S.listening){const w=PW[S.ses.pos];m.innerHTML=`<b>J’écoute…</b> récite${w?' à partir de la flèche dorée':''}.`}
-  else m.textContent='Touche le micro et récite. Touche un mot pour commencer à cet endroit.';
-}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&S.listening)stopListening(true)});
 function showSummary(){
   const r=S.run,tot=r.ok+r.approx+r.bad+r.skip,acc=tot?Math.round(100*(r.ok+r.approx)/tot):0;
   const items=r.errs.slice(0,60).map(e=>`<li><span class="ar">${esc(e.t)}</span><span class="small muted">${e.key} · ${e.kind==='bad'?'entendu « '+esc(e.heard||'—')+' »':'oublié'}</span></li>`).join('');
@@ -499,7 +650,7 @@ function openWordMenu(i){
   const w=PW[i];if(!w)return;
   if(w.hid&&!w.rev&&w.status!=='ok'&&w.status!=='approx'){w.rev=true;paint();setTimeout(()=>{w.rev=false;paint()},3000);return}
   const st=w.status==='bad'?`Entendu : « ${esc(w.heard||'—')} »`:w.status==='skip'?'Mot oublié':w.status==='approx'?'À vérifier':w.status==='ok'?'Correct':'';
-  $('#wm').innerHTML=`<div class="ar" style="text-align:center;font-size:2rem">${esc(w.t)}</div>
+  $('#wm').innerHTML=`<div class="ar" style="text-align:center;font-size:2.2rem">${esc(w.t)}</div>
     <p class="small muted" style="text-align:center">Verset ${w.key} · mot ${w.pos}${st?' · '+st:''}</p>
     <div class="row" style="justify-content:center">
       <button class="btn" id="wmStart">${S.listening?'Reprendre ici':'Commencer ici'}</button>
@@ -515,7 +666,7 @@ function openWordMenu(i){
 function openVerseMenu(key){stopAudio();playKeys([key])}
 function restartAt(i){
   PW.forEach((w,j)=>{w.status=j<i?'na':null;w.heard='';w.rev=false});
-  S.ses={pos:i,done:false};paint();setMsg();
+  S.ses=newSes({pos:i,locked:true});paint();setMsg();
 }
 $('#mic').onclick=()=>S.listening?stopListening(false):startListening();
 
@@ -531,6 +682,7 @@ document.addEventListener('keydown',e=>{
 $$('.tabs button').forEach(b=>b.onclick=()=>{
   $$('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
   $$('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+b.dataset.v));
+  if(b.dataset.v==='read')requestAnimationFrame(fit);
   if(b.dataset.v==='prog')renderProgress();
   if(b.dataset.v==='set')renderSettings();
 });
@@ -605,18 +757,20 @@ function renderSettings(){
   const opt=(o,v)=>Object.entries(o).map(([k,l])=>`<option value="${k}"${k===v?' selected':''}>${l}</option>`).join('');
   $('#v-set').innerHTML=`
   <div class="card"><h3>Récitation</h3>
-    <div class="row"><label for="cSens">Tolérance de la détection</label><select id="cSens">${opt({strict:'Stricte',normal:'Normale',lenient:'Souple'},C.sens)}</select></div>
+    <div class="row"><label for="cSens">Tolérance de la détection</label><select id="cSens">${opt({strict:'Stricte : signale tout écart',normal:'Normale',lenient:'Souple : évite les fausses alertes'},C.sens)}</select></div>
     <div class="row"><label for="cHifz">Mode mémorisation</label><select id="cHifz">${opt({off:'Désactivé',first:'Premier mot de chaque verset visible',half:'Un mot sur deux caché',all:'Tout caché'},C.hifz)}</select></div>
     <p class="small muted">En mode mémorisation, un mot caché apparaît quand tu le récites correctement. Touche un mot caché pour le voir 3 secondes.</p>
+  </div>
+  <div class="card"><h3>Affichage</h3>
+    <div class="row"><label for="cLay">Mise en page</label><select id="cLay">${opt({auto:'Automatique',mushaf:'Mushaf : 15 lignes par page',flow:'Lecture confortable : texte plus grand'},C.layout)}</select></div>
+    <div class="row"><label for="cFont">Police du Coran</label><select id="cFont">${opt({amiri:'Amiri Quran',sch:'Scheherazade New',naskh:'Noto Naskh Arabic'},C.font)}</select></div>
+    <div class="row"><label for="cSc">Taille du texte</label><input id="cSc" type="range" min="0.8" max="1.4" step="0.05" value="${C.scale}"></div>
+    <div class="row"><label for="cTh">Thème</label><select id="cTh">${opt({auto:'Automatique',light:'Clair',dark:'Sombre'},C.theme)}</select></div>
   </div>
   <div class="card"><h3>Audio</h3>
     <div class="row"><label for="cRec">Récitateur</label><select id="cRec">${opt(RECITERS,C.reciter)}</select></div>
     <div class="row"><label for="cSpd">Vitesse</label><select id="cSpd">${opt({'0.75':'0,75×','1':'1×','1.25':'1,25×','1.5':'1,5×'},String(C.speed))}</select></div>
     <div class="row"><label for="cRep">Répétitions par verset</label><select id="cRep">${opt({1:'1',2:'2',3:'3',5:'5',10:'10'},String(C.repeat))}</select></div>
-  </div>
-  <div class="card"><h3>Affichage</h3>
-    <div class="row"><label for="cTh">Thème</label><select id="cTh">${opt({auto:'Automatique',light:'Clair',dark:'Sombre'},C.theme)}</select></div>
-    <div class="row"><label for="cSc">Taille du texte</label><input id="cSc" type="range" min="0.8" max="1.3" step="0.05" value="${C.scale}"></div>
   </div>
   <div class="card"><h3>Texte du Coran</h3>
     <p class="small muted">Riwaya Hafs ʿan ʿĀsim, pagination du mushaf de Médine (604 pages). Le texte est chargé depuis l’API Quran.com, jamais saisi à la main, puis gardé sur cet appareil.</p>
@@ -636,9 +790,11 @@ function renderSettings(){
   const bind=(id,fn)=>{const e=$(id);if(e)e.onchange=()=>{fn(e);saveC()}};
   bind('#cSens',e=>C.sens=e.value);
   bind('#cHifz',e=>{C.hifz=e.value;showPage(S.page)});
+  bind('#cLay',e=>{C.layout=e.value});
+  bind('#cFont',e=>{C.font=e.value;applyTheme();setTimeout(fit,300)});
   bind('#cRec',e=>C.reciter=e.value);bind('#cSpd',e=>{C.speed=+e.value;AUD.playbackRate=C.speed});bind('#cRep',e=>C.repeat=+e.value);
   bind('#cTh',e=>{C.theme=e.value;applyTheme()});
-  $('#cSc').oninput=e=>{C.scale=+e.target.value;applyTheme();saveC()};
+  $('#cSc').oninput=e=>{C.scale=+e.target.value;saveC()};
   bind('#cApi',e=>{C.api=e.value.trim().replace(/\/$/,'')||DEF.api;idbClear();LS.set('chapters',[]);toast('Adresse enregistrée. Les pages seront rechargées.')});
   const showIg=r=>{$('#igBox').innerHTML=`<p class="${r.ok?'ok-t':'err'}"><b>${r.ok?'Contrôle réussi':'Contrôle échoué'}</b> : ${r.pages}/604 pages, ${r.verses}/6236 versets, ${r.words} mots.${r.errs.length?'<br>'+r.errs.map(esc).join('<br>'):''}</p>`};
   $('#chk').onclick=async()=>{await loadChapters().catch(()=>{});showIg(await verifyAll())};
@@ -662,7 +818,7 @@ function renderSettings(){
 /* ------------------------------------------------------------------ démarrage */
 async function boot(){
   try{await loadChapters()}catch(e){
-    $('#lines').innerHTML=`<div class="err" style="direction:ltr;padding:20px">Impossible de joindre l’API du Coran (${esc(e.message)}). Connecte-toi à Internet pour le premier lancement.<br><br><button class="btn" id="retry">Réessayer</button></div>`;
+    $('#lines').innerHTML=`<div class="err" style="direction:ltr;padding:20px;font-family:var(--ui);font-size:15px">Impossible de joindre l’API du Coran (${esc(e.message)}). Connecte-toi à Internet pour le premier lancement.<br><br><button class="btn" id="retry">Réessayer</button></div>`;
     $('#retry').onclick=boot;return;
   }
   $('#selSura').innerHTML=CH.map(c=>`<option value="${c.id}">${c.id}. ${esc(c.name)} — ${esc(c.ar)}</option>`).join('');
