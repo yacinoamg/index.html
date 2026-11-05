@@ -101,6 +101,9 @@ main{padding-top:14px}
 #msgMain b{color:var(--ink)}
 #diag{font-size:.78rem;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
 .dock .ib{flex:none}
+.chip{background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.78rem;color:var(--accent);margin-top:5px}
+#mic.live.lvl{animation:none;box-shadow:0 0 0 calc(var(--lvl,0) * 20px) rgba(194,51,51,.35),0 4px 14px rgba(0,0,0,.25)}
+dialog p{margin:.4em 0}
 
 /* cartes et formulaires */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 12px}
@@ -182,12 +185,13 @@ dialog::backdrop{background:rgba(5,10,20,.55)}
   <button id="mic" aria-label="Commencer la récitation">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
   </button>
-  <div id="msg"><div id="msgMain">Touche le micro et récite, depuis n’importe quel mot de la page.</div><div id="diag"></div></div>
+  <div id="msg"><div id="msgMain">Touche le micro et récite, depuis n’importe quel mot de la page.</div><div id="diag"></div><button type="button" class="chip" id="eng"></button></div>
   <button class="ib" id="playPage" aria-label="Écouter la page">▶︎ Page</button>
 </div></div>
 
 <dialog id="wm"></dialog>
 <dialog id="sum"></dialog>
+<dialog id="dl"></dialog>
 <div id="toast" hidden></div>
 
 <script>
@@ -309,7 +313,7 @@ function feed(exp,ses,heardWords,thr){
 //</engine>
 
 /* ------------------------------------------------------------------ réglages */
-const DEF={theme:'auto',scale:1,sens:'normal',hifz:'off',reciter:'Alafasy_128kbps',speed:1,repeat:1,font:'amiri',layout:'auto',api:'https://api.quran.com/api/v4'};
+const DEF={theme:'auto',scale:1,sens:'normal',hifz:'off',reciter:'Alafasy_128kbps',speed:1,repeat:1,font:'amiri',layout:'auto',engine:'model',modelId:'omartariq612/tarteel-ai-whisper-tiny-ar-quran-onnx',api:'https://api.quran.com/api/v4'};
 let C=Object.assign({},DEF,LS.get('cfg',{}));
 const saveC=()=>LS.set('cfg',C);
 const THR={strict:.85,normal:.72,lenient:.6};
@@ -509,9 +513,10 @@ function foldPage(){
   LS.set('srs',srs);LS.set('weak',weak);
 }
 async function startListening(){
+  if(S.listening)return;
+  if(engine()==='model')return startModel();
   if(!SR){toast('La reconnaissance vocale n’est pas disponible ici. Utilise Safari, Chrome ou Edge.');
     setDiag('Ce navigateur ne propose pas la reconnaissance vocale.');return}
-  if(S.listening)return;
   S.listening=true;
   $('#mic').classList.add('live');$('#mic').setAttribute('aria-label','Arrêter la récitation');
   $('#msgMain').innerHTML='<b>Autorisation du micro…</b>';setDiag('');
@@ -593,6 +598,8 @@ function stopListening(silent,keepDiag){
   const was=S.listening;S.listening=false;
   clearTimeout(watch);
   try{S.rec&&S.rec.abort()}catch(e){}
+  stopCapture();A.queue=[];
+  $('#mic').style.removeProperty('--lvl');$('#mic').classList.remove('lvl');
   $('#mic').classList.remove('live');$('#mic').setAttribute('aria-label','Commencer la récitation');
   $('#heard').textContent='';
   if(!keepDiag)setDiag('');
@@ -617,6 +624,188 @@ function showSummary(){
     <p class="small muted">La reconnaissance vocale peut se tromper : touche un mot rouge pour le valider à la main.</p>
     <div class="row"><button class="btn" id="sumClose">Fermer</button></div>`;
   $('#sum').showModal();$('#sumClose').onclick=()=>$('#sum').close();
+}
+
+/* ------------------------------------------------------------------ moteur 2 : modèle Coran (Whisper Tarteel) dans le navigateur */
+const engine=()=>C.engine==='browser'?'browser':'model';
+const MODEL_VERS=['3.5.1','3.5.0','3.3.3','3.2.4'];
+const WORKER_SRC=[
+"const VERS="+JSON.stringify(MODEL_VERS)+";",
+"let T=null,asr=null;const fl={};",
+"function pct(){let l=0,t=0;for(const k in fl){l+=fl[k].l;t+=fl[k].t}return t?Math.round(100*l/t):0}",
+"self.onmessage=async e=>{",
+" const m=e.data;",
+" try{",
+"  if(m.type==='load'){",
+"   for(const v of VERS){try{T=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@'+v);break}catch(err){}}",
+"   if(!T)throw new Error('bibliothèque introuvable');",
+"   T.env.allowLocalModels=false;",
+"   asr=await T.pipeline('automatic-speech-recognition',m.model,{dtype:{encoder_model:'q8',decoder_model_merged:'q8'},progress_callback:p=>{",
+"    if(p&&p.file&&p.total){fl[p.file]={l:p.loaded||0,t:p.total};self.postMessage({type:'progress',pct:pct()})}}});",
+"   self.postMessage({type:'ready'});",
+"  }else if(m.type==='run'){",
+"   const o=await asr(m.audio,{language:'arabic',task:'transcribe'});",
+"   self.postMessage({type:'text',id:m.id,text:(o&&o.text)||''});",
+"  }",
+" }catch(err){self.postMessage({type:'error',id:m.id,message:String((err&&err.message)||err)})}",
+"};"
+].join('\n');
+const M={w:null,state:'idle',pending:new Map(),id:0,pct:0,loading:null,onp:null};
+function modelWorker(){
+  if(M.w)return M.w;
+  const w=new Worker(URL.createObjectURL(new Blob([WORKER_SRC],{type:'text/javascript'})),{type:'module'});
+  w.onmessage=e=>{
+    const m=e.data;
+    if(m.type==='progress'){M.pct=m.pct;if(M.state==='loading')setDiag(`Téléchargement du modèle Coran… ${m.pct}%`);if(M.onp)M.onp(m.pct)}
+    else if(m.type==='ready'){M.state='ready';if(M.res)M.res()}
+    else if(m.type==='text'){const p=M.pending.get(m.id);M.pending.delete(m.id);if(p)p.res(m.text)}
+    else if(m.type==='error'){
+      if(M.state==='loading'){M.state='idle';if(M.rej)M.rej(new Error(m.message))}
+      else{const p=M.pending.get(m.id);M.pending.delete(m.id);if(p)p.rej(new Error(m.message))}
+    }
+  };
+  w.onerror=ev=>{if(M.state==='loading'&&M.rej)M.rej(new Error(ev.message||'worker'))};
+  M.w=w;return w;
+}
+function loadModel(){
+  if(M.state==='ready')return Promise.resolve();
+  if(M.loading)return M.loading;
+  M.state='loading';
+  M.loading=new Promise((res,rej)=>{M.res=res;M.rej=rej;modelWorker().postMessage({type:'load',model:C.modelId})})
+    .catch(e=>{try{M.w&&M.w.terminate()}catch(x){}M.w=null;M.state='idle';throw e})
+    .finally(()=>{M.loading=null});
+  return M.loading;
+}
+function transcribe(f32){
+  return new Promise((res,rej)=>{const id=++M.id;M.pending.set(id,{res,rej});M.w.postMessage({type:'run',id,audio:f32},[f32.buffer])});
+}
+function askDownload(){
+  return new Promise(res=>{
+    const d=$('#dl');
+    d.innerHTML=`<h3 style="margin-top:0">Modèle Coran</h3>
+      <p>Pour reconnaître ta récitation sans la dictée de l’iPhone, l’application télécharge un modèle entraîné sur le Coran (environ 120 Mo, une seule fois).</p>
+      <p class="small muted">Utilise le Wi-Fi si possible. Ensuite, le modèle reste sur ton téléphone.</p>
+      <div class="row"><button class="btn" id="dlGo">Télécharger</button><button class="btn alt" id="dlNo">Utiliser Safari</button></div>`;
+    d.showModal();
+    let out='cancel';
+    $('#dlGo').onclick=()=>{out='go';d.close()};
+    $('#dlNo').onclick=()=>{out='browser';d.close()};
+    d.onclose=()=>res(out);
+  });
+}
+const A={ac:null,stream:null,node:null,src:null,pre:[],seg:[],segLen:0,voice:0,sil:0,noise:.008,active:false,busy:false,queue:[],draining:false};
+function resample(x,from,to){
+  if(from===to)return x;
+  const r=from/to,n=Math.floor(x.length/r),out=new Float32Array(n);
+  for(let i=0;i<n;i++){const a=Math.floor(i*r),b=Math.min(x.length,Math.floor((i+1)*r));let s=0;for(let j=a;j<b;j++)s+=x[j];out[i]=b>a?s/(b-a):0}
+  return out;
+}
+async function startAudio(){
+  A.stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:true}});
+  const AC=window.AudioContext||window.webkitAudioContext;
+  A.ac=new AC();await A.ac.resume();
+  A.src=A.ac.createMediaStreamSource(A.stream);
+  A.node=A.ac.createScriptProcessor(4096,1,1);
+  A.node.onaudioprocess=ev=>onAudio(new Float32Array(ev.inputBuffer.getChannelData(0)));
+  A.src.connect(A.node);A.node.connect(A.ac.destination);
+  Object.assign(A,{seg:[],pre:[],segLen:0,voice:0,sil:0,active:false,noise:.008,draining:false,queue:[]});
+}
+function stopCapture(){
+  try{if(A.node){A.node.onaudioprocess=null;A.node.disconnect()}}catch(e){}
+  try{A.src&&A.src.disconnect()}catch(e){}
+  try{A.stream&&A.stream.getTracks().forEach(t=>t.stop())}catch(e){}
+  try{A.ac&&A.ac.close()}catch(e){}
+  A.ac=A.stream=A.node=A.src=null;A.active=false;A.seg=[];A.pre=[];
+}
+function onAudio(x){
+  if(!S.listening||engine()!=='model'||!A.ac||A.draining)return;
+  const sr=A.ac.sampleRate,dur=x.length/sr*1000;
+  let s=0;for(let i=0;i<x.length;i+=2)s+=x[i]*x[i];
+  const rms=Math.sqrt(s/(x.length/2));
+  $('#mic').style.setProperty('--lvl',Math.min(1,rms*12).toFixed(2));
+  const loud=rms>Math.max(.015,A.noise*3);
+  if(!loud)A.noise=A.noise*.95+rms*.05;
+  if(loud){
+    if(!A.active){A.active=true;A.seg=A.pre.slice();A.segLen=A.seg.reduce((n,c)=>n+c.length,0);A.voice=0}
+    A.voice+=dur;A.sil=0;
+  }
+  if(A.active){A.seg.push(x);A.segLen+=x.length;if(!loud)A.sil+=dur}
+  else{A.pre.push(x);if(A.pre.length>4)A.pre.shift()}
+  const segMs=A.segLen/sr*1000;
+  if(A.active&&(A.sil>=650||(segMs>=9000&&!loud)||segMs>=15000))flushSeg();
+}
+function flushSeg(){
+  if(!A.ac)return;
+  const sr=A.ac.sampleRate,total=A.seg.reduce((n,c)=>n+c.length,0),all=new Float32Array(total);
+  let o=0;for(const c of A.seg){all.set(c,o);o+=c.length}
+  const voiced=A.voice;
+  A.seg=[];A.segLen=0;A.active=false;A.voice=0;A.sil=0;A.pre=[];
+  if(voiced<350)return;
+  const f=resample(all,sr,16000);
+  let pk=0;for(let i=0;i<f.length;i++){const v=Math.abs(f[i]);if(v>pk)pk=v}
+  if(pk>0&&pk<.5){const g=.7/pk;for(let i=0;i<f.length;i++)f[i]*=g}
+  A.queue.push(f);if(A.queue.length>3)A.queue.shift();
+  pump();
+}
+async function pump(){
+  if(A.busy)return;A.busy=true;
+  try{
+    while(A.queue.length&&S.listening){
+      const f=A.queue.shift();
+      $('#heard').textContent='…';setDiag('Analyse…');
+      let text='';
+      try{text=await transcribe(f)}catch(e){setDiag('Erreur du modèle : '+e.message);continue}
+      if(!S.listening)break;
+      text=(text||'').trim();
+      if(normalize(text).length>=2){
+        evCount++;
+        feed(PW,S.ses,text.split(/\s+/).filter(Boolean),THR[C.sens]);
+        $('#heard').textContent=text;clearTimeout(hideT);hideT=setTimeout(()=>{$('#heard').textContent=''},4000);
+        setMsg();paint();
+        if(S.ses&&S.ses.done)onPageDone();
+      }else $('#heard').textContent='';
+      setDiag(A.queue.length?'Analyse…':'Prêt. Continue, fais une courte pause entre les versets.');
+    }
+  }finally{A.busy=false}
+}
+async function drainModel(){
+  A.draining=true;
+  if(A.active)flushSeg();
+  const t0=Date.now();
+  while((A.busy||A.queue.length)&&Date.now()-t0<15000){$('#msgMain').innerHTML='<b>Analyse finale…</b>';await sleep(200)}
+}
+async function startModel(){
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&(window.AudioContext||window.webkitAudioContext)&&window.Worker)){
+    setDiag('Ce navigateur ne permet pas le modèle Coran. Choisis « reconnaissance de Safari ».');return}
+  S.listening=true;
+  const off=()=>{S.listening=false;$('#mic').classList.remove('live','lvl');$('#mic').setAttribute('aria-label','Commencer la récitation');setMsg()};
+  $('#mic').classList.add('live','lvl');$('#mic').setAttribute('aria-label','Arrêter la récitation');
+  try{
+    if(M.state!=='ready'){
+      if(!LS.get('modelOk',false)){
+        const r=await askDownload();
+        if(r==='browser'){off();C.engine='browser';saveC();updEng();return startListening()}
+        if(r!=='go'){off();return}
+      }
+      $('#msgMain').innerHTML='<b>Chargement du modèle Coran…</b>';setDiag('Téléchargement du modèle Coran… 0%');
+      await loadModel();LS.set('modelOk',true);
+    }
+    if(!S.listening)return;
+    $('#msgMain').innerHTML='<b>Autorisation du micro…</b>';
+    await startAudio();
+  }catch(e){
+    off();stopCapture();
+    const n=e&&e.name;
+    setDiag(n==='NotAllowedError'||n==='SecurityError'
+      ?'Micro refusé. Touche « aA » dans la barre d’adresse, Réglages du site web, Micro.'
+      :'Impossible de démarrer le modèle Coran : '+((e&&e.message)||e)+'. Tu peux choisir « reconnaissance de Safari ».');
+    return;
+  }
+  if(!S.listening){stopCapture();return}
+  S.run=S.run||newRun();
+  if(!S.ses||S.ses.done){PW.forEach(w=>{w.status=null;w.heard='';w.rev=false});S.ses=newSes()}
+  evCount=0;setMsg();paint();
+  setDiag('Prêt. Récite, fais une courte pause entre les versets.');
 }
 
 /* ------------------------------------------------------------------ audio */
@@ -668,7 +857,17 @@ function restartAt(i){
   PW.forEach((w,j)=>{w.status=j<i?'na':null;w.heard='';w.rev=false});
   S.ses=newSes({pos:i,locked:true});paint();setMsg();
 }
-$('#mic').onclick=()=>S.listening?stopListening(false):startListening();
+$('#mic').onclick=async()=>{
+  if(!S.listening){startListening();return}
+  if(engine()==='model'&&A.ac)await drainModel();
+  stopListening(false);
+};
+function updEng(){$('#eng').textContent=engine()==='model'?'Moteur : modèle Coran':'Moteur : reconnaissance de Safari'}
+$('#eng').onclick=()=>{
+  if(S.listening){toast('Arrête le micro avant de changer de moteur.');return}
+  C.engine=engine()==='model'?'browser':'model';saveC();updEng();setDiag('');
+};
+updEng();
 
 function go(p){if(S.listening)stopListening(true);stopAudio();showPage(p)}
 $('#prev').onclick=()=>go(S.page-1);
@@ -767,6 +966,12 @@ function renderSettings(){
     <div class="row"><label for="cSc">Taille du texte</label><input id="cSc" type="range" min="0.8" max="1.4" step="0.05" value="${C.scale}"></div>
     <div class="row"><label for="cTh">Thème</label><select id="cTh">${opt({auto:'Automatique',light:'Clair',dark:'Sombre'},C.theme)}</select></div>
   </div>
+  <div class="card"><h3>Moteur de reconnaissance</h3>
+    <div class="row"><label for="cEng">Moteur</label><select id="cEng">${opt({model:'Modèle Coran (conseillé sur iPhone)',browser:'Reconnaissance de Safari'},engine())}</select></div>
+    <p class="small muted">Le modèle Coran (Whisper de Tarteel, version « tiny ») tourne sur ton téléphone après un téléchargement d’environ 120 Mo. Il attend une courte pause entre les versets pour afficher les mots. La reconnaissance de Safari est instantanée, mais dépend de la dictée de l’iPhone.</p>
+    <div class="row"><label for="cMod">Modèle (Hugging Face)</label><input id="cMod" type="text" value="${esc(C.modelId)}" dir="ltr"></div>
+    <div class="row"><button class="btn alt" id="mPre">${M.state==='ready'?'Modèle prêt':'Précharger le modèle'}</button></div>
+  </div>
   <div class="card"><h3>Audio</h3>
     <div class="row"><label for="cRec">Récitateur</label><select id="cRec">${opt(RECITERS,C.reciter)}</select></div>
     <div class="row"><label for="cSpd">Vitesse</label><select id="cSpd">${opt({'0.75':'0,75×','1':'1×','1.25':'1,25×','1.5':'1,5×'},String(C.speed))}</select></div>
@@ -789,6 +994,15 @@ function renderSettings(){
   </div>`;
   const bind=(id,fn)=>{const e=$(id);if(e)e.onchange=()=>{fn(e);saveC()}};
   bind('#cSens',e=>C.sens=e.value);
+  bind('#cEng',e=>{C.engine=e.value;updEng()});
+  bind('#cMod',e=>{C.modelId=e.value.trim()||DEF.modelId;try{M.w&&M.w.terminate()}catch(x){}M.w=null;M.state='idle';LS.set('modelOk',false)});
+  $('#mPre').onclick=async()=>{
+    const b=$('#mPre');if(M.state==='ready')return;
+    b.disabled=true;M.onp=p=>{b.textContent=`Téléchargement… ${p}%`};b.textContent='Téléchargement… 0%';
+    try{await loadModel();LS.set('modelOk',true);b.textContent='Modèle prêt'}
+    catch(e){b.textContent='Échec : réessayer';toast('Échec : '+e.message)}
+    M.onp=null;b.disabled=false;
+  };
   bind('#cHifz',e=>{C.hifz=e.value;showPage(S.page)});
   bind('#cLay',e=>{C.layout=e.value});
   bind('#cFont',e=>{C.font=e.value;applyTheme();setTimeout(fit,300)});
